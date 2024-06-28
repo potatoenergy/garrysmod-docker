@@ -6,7 +6,7 @@ Run a Garry's Mod server easily inside a Docker container
 **Supported tags**
 -----------------
 
-* `latest` - the most recent production-ready image, based on `debian-arm64`
+* `latest` - the most recent production-ready image, based on `sonroyaalmerol/steamcmd-arm64:root`
 
 **Documentation**
 ----------------
