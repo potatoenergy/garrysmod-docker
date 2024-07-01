@@ -1,12 +1,7 @@
-FROM sonroyaalmerol/steamcmd-arm64:root as build_stage
+FROM sonroyaalmerol/steamcmd-arm64:root AS build_stage
 
 LABEL maintainer="ponfertato@ya.ru"
 LABEL description="A Dockerised version of the Garry's Mod dedicated server for ARM64 (using box86)"
-
-ENV STEAMAPPID 4020
-ENV STEAMAPP garrysmod
-ENV STEAMAPPDIR /home/steam/${STEAMAPP}-server
-ENV HOMEDIR /home/steam
 
 RUN dpkg --add-architecture amd64 \
     && dpkg --add-architecture i386 \
@@ -28,18 +23,20 @@ RUN dpkg --add-architecture amd64 \
     && rm libssl1.1_1.1.1f-1ubuntu2_i386.deb \
     && rm -rf /var/lib/apt/lists/* 
 
+ENV HOMEDIR="/home/steam" \
+    STEAMAPPID="4020" \
+    STEAMAPPDIR="/home/steam/garrysmod-server"
+
 COPY etc/entry.sh ${HOMEDIR}/entry.sh
 
 WORKDIR ${STEAMAPPDIR}
 
 RUN chmod +x "${HOMEDIR}/entry.sh" \
-    && chown -R "${USER}:${USER}" "${HOMEDIR}/entry.sh" "${STEAMAPPDIR}"
+    && chown -R "${USER}":"${USER}" "${HOMEDIR}/entry.sh" ${STEAMAPPDIR}
 
 FROM build_stage AS bookworm-root
 
-EXPOSE 27015/tcp 27015/udp 27005/udp 27020/udp
-
-ENV GM_ARGS=""\
+ENV GM_ARGS="" \
     GM_CLIENTPORT="27005" \
     GM_GAMEMODE="sandbox" \
     GM_IP="" \
@@ -52,11 +49,16 @@ ENV GM_ARGS=""\
     GM_TICKRATE="" \
     GM_WORKSHOP=""
 
+EXPOSE ${GM_CLIENTPORT}/udp \
+    ${GM_PORT}/tcp \
+    ${GM_PORT}/udp \
+    ${GM_SOURCETVPORT}/udp
+
 USER ${USER}
 
 WORKDIR ${HOMEDIR}
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD netstat -l | grep "27015.*LISTEN"
+    CMD netstat -l | grep "${GM_PORT}.*LISTEN"
 
 CMD ["bash", "entry.sh"]
